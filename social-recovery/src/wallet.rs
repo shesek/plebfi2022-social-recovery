@@ -2,6 +2,7 @@ use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey};
 use bitcoin::util::schnorr::{TapTweak, TweakedKeyPair, TweakedPublicKey};
 use bitcoin::util::taproot::TaprootSpendInfo;
 use bitcoin::{secp256k1, Address, Amount, Network};
+use bitcoincore_rpc::RpcApi;
 use minsc::bitcoin;
 
 use minsc::runtime::{Evaluate, Execute};
@@ -76,7 +77,7 @@ impl UserWallet {
         .unwrap()
     }
 
-    pub fn tweaked_output_keypair(&self, index: u32, amount: Amount) -> (TweakedKeyPair) {
+    pub fn tweaked_output_keypair(&self, index: u32, amount: Amount) -> TweakedKeyPair {
         let user_priv = self.user_xpriv.derive_priv(&EC, &[index.into()]).unwrap();
         let merkle_root = self.tapinfo(index, amount).merkle_root();
 
@@ -107,12 +108,45 @@ impl UserWallet {
     ) -> Vec<TweakedKeyPair> {
         let mut keypairs =
             Vec::with_capacity((end_index - start_index + 1) as usize * amounts.len());
+
         for index in start_index..=end_index {
             for amount in amounts {
                 keypairs.push(self.tweaked_output_keypair(index, *amount));
             }
         }
         keypairs
+    }
+
+    pub fn import_tweaked_to_core(
+        &self,
+        client: &bitcoincore_rpc::Client,
+        start_index: u32,
+        end_index: u32,
+        amounts: &[Amount],
+    ) -> Result<(), ()> {
+        let keypairs = self.export_tweaked(start_index, end_index, amounts);
+        for keypair in keypairs {
+            let keypairi = keypair.into_inner();
+            let seckey = secp256k1::SecretKey::from_keypair(&keypairi);
+            let corerpc_seckey =
+                bitcoincore_rpc::bitcoin::secp256k1::SecretKey::from_slice(seckey.as_ref())
+                    .unwrap();
+            let privkey = bitcoincore_rpc::bitcoin::PrivateKey {
+                compressed: false,
+                network: bitcoincore_rpc::bitcoin::Network::Signet, // FIXME self.network,
+                key: corerpc_seckey,
+            };
+            println!("privkey: {}", privkey);
+            client
+                .import_private_key(
+                    &privkey,
+                    Some(&keypairi.public_key().to_string()),
+                    Some(false),
+                )
+                .unwrap();
+        }
+        client.rescan_blockchain(None, None).unwrap();
+        Ok(())
     }
 }
 
@@ -137,16 +171,22 @@ fn test_wallet() {
         "address 0: {:?}",
         wallet.address(0, "0.25 BTC".parse().unwrap())
     );
+
+    let amounts = vec!["0.25 BTC".parse().unwrap(), "1 BTC".parse().unwrap()];
+
     println!(
         "export 0-3 with 2 amounts: {} total keypairs",
-        wallet
-            .export_tweaked(
-                0,
-                3,
-                &["0.25 BTC".parse().unwrap(), "1 BTC".parse().unwrap()]
-            )
-            .len()
+        wallet.export_tweaked(0, 4, &amounts).len()
     );
+
+    let client = bitcoincore_rpc::Client::new(
+        "http://127.0.0.1:38332/wallet/ctvex5",
+        bitcoincore_rpc::Auth::UserPass("satoshi".into(), "1234".into()),
+    )
+    .unwrap();
+    wallet
+        .import_tweaked_to_core(&client, 0, 3, &amounts)
+        .unwrap();
 }
 
 // slides
