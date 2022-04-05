@@ -1,6 +1,5 @@
 use rand::Rng;
 
-use bip39::Mnemonic;
 use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey};
 use bitcoin::{secp256k1, Network};
 use minsc::bitcoin;
@@ -71,19 +70,30 @@ impl UserBackup {
     fn as_blob(&self) -> BackupBlob {
         bincode::serialize(self).unwrap()
     }
+
+    /*
     fn as_bip39_mnemonic(&self) -> Mnemonic {
         let mut blob = self.as_blob();
         // Has to be a multiply of 32 bits to be converted into a mnemonic. Pad it with 3 extra 0x00 to make it so.
-        assert!(blob.len() == 161);
+        assert_eq!(blob.len(), 161);
         blob.insert(0, 0);
         blob.insert(0, 0);
         blob.insert(0, 0);
         Mnemonic::from_entropy(&blob).unwrap()
     }
+
     fn from_bip39_mnemonic(s: &str) -> Result<Self, bip39::Error> {
         let mnemonic = Mnemonic::parse(s)?;
-        unimplemented!();
+        let mut bytes = mnemonic.to_entropy();
+        assert_eq!(bytes.len(), 164);
+        // drop the extra 0x00 padding
+        for _ in 0..3 {
+            assert_eq!(bytes[0], 0);
+            bytes.remove(0);
+        }
+        Ok(bincode::deserialize(&bytes).unwrap())
     }
+    */
 }
 
 #[test]
@@ -98,7 +108,7 @@ fn test_create_wallet() {
     let wallet = create_wallet(params, Network::Bitcoin);
     println!("user backup: {:#?}", wallet.0);
     println!("user backup blob: {}", wallet.0.as_blob().to_hex());
-    println!("user backup mnemonic: {}", wallet.0.as_bip39_mnemonic());
+    //println!("user backup mnemonic: {}", wallet.0.as_bip39_mnemonic());
     println!("recovery backup: {:#?}", wallet.1);
 
     println!(
