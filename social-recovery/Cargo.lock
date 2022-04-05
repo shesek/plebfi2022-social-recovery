@@ -74,18 +74,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "349f9b6a179ed607305526ca489b34ad0a41aed5f7980fa90eb03160b69598fb"
 
 [[package]]
-name = "bitcoin"
-version = "0.28.0-rc.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fbcdc1e8a189ee0421557ce7adcbc001df053076d75ab6b7d0d645e13cf414ff"
-dependencies = [
- "bech32",
- "bitcoin_hashes",
- "secp256k1",
- "serde",
-]
-
-[[package]]
 name = "bitcoin_hashes"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -315,15 +303,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "308cc39be01b73d0d18f82a0e7b2a3df85245f84af96fdddc5d202d27e47b86a"
 
 [[package]]
-name = "miniscript"
-version = "7.0.0-rc.2"
-source = "git+https://github.com/rust-bitcoin/rust-miniscript?rev=d8cc633b5b726e7ae595031ba04dcc1c1c2d6fda#d8cc633b5b726e7ae595031ba04dcc1c1c2d6fda"
-dependencies = [
- "bitcoin",
- "serde",
-]
-
-[[package]]
 name = "minsc"
 version = "0.2.0"
 dependencies = [
@@ -331,8 +310,8 @@ dependencies = [
  "lalrpop",
  "lalrpop-util",
  "lazy_static",
- "miniscript",
  "regex",
+ "sapio-miniscript",
  "serde",
  "thiserror",
  "wasm-bindgen",
@@ -527,29 +506,50 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73b4b750c782965c211b42f022f59af1fbceabdd026623714f104152f1ec149f"
 
 [[package]]
-name = "scopeguard"
-version = "1.1.0"
+name = "sapio-bitcoin"
+version = "0.28.0-rc.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
-
-[[package]]
-name = "secp256k1"
-version = "0.22.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26947345339603ae8395f68e2f3d85a6b0a8ddfe6315818e80b8504415099db0"
+checksum = "4f633d922199b181adf1611bdabce34d07474de7e60504068fe04e8fc7e78d32"
 dependencies = [
- "secp256k1-sys",
+ "bech32",
+ "bitcoin_hashes",
+ "sapio-secp256k1",
  "serde",
 ]
 
 [[package]]
-name = "secp256k1-sys"
-version = "0.5.0"
+name = "sapio-miniscript"
+version = "7.0.0-10"
+source = "git+https://github.com/sapio-lang/rust-miniscript?rev=aec9a9e9b8f03bac468d11facf2586b5e2e80610#aec9a9e9b8f03bac468d11facf2586b5e2e80610"
+dependencies = [
+ "sapio-bitcoin",
+ "serde",
+]
+
+[[package]]
+name = "sapio-secp256k1"
+version = "0.21.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07b5b9d7322572e1f3aeed208668ce87789b3645dbb73082c5ce99a004103a35"
+checksum = "ff57f47f870f557e99622a6a951fd130b5216ab54e0a5503a0ade6cd5b601f7d"
+dependencies = [
+ "sapio-secp256k1-sys",
+ "serde",
+]
+
+[[package]]
+name = "sapio-secp256k1-sys"
+version = "0.21.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43348a3209b43cb24c95f06b7a0e819327fb542aba1aecc727b72c6fe93502e7"
 dependencies = [
  "cc",
 ]
+
+[[package]]
+name = "scopeguard"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
 name = "serde"
@@ -610,6 +610,7 @@ name = "social-recovery"
 version = "0.1.0"
 dependencies = [
  "bincode",
+ "lazy_static",
  "minsc",
  "rand",
  "serde",

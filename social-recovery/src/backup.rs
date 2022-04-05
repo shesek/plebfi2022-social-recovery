@@ -1,4 +1,3 @@
-use minsc::bitcoin::secp256k1::ecdsa::RecoverableSignature;
 use rand::Rng;
 use std::convert::TryInto;
 use std::fmt;
@@ -7,8 +6,7 @@ use bitcoin::hashes::hex::{FromHex, ToHex};
 use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey};
 use bitcoin::{secp256k1, Network};
 use minsc::bitcoin;
-use serde::Deserialize;
-use sharks::{Share, Sharks};
+use sharks::Sharks;
 
 /// The recovery parameters. These are necessary for recovery and kept by both the user and his friends.
 #[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
@@ -131,16 +129,16 @@ fn test_create_backup() {
         delay: 100,
         fee: 250,
     };
-    let backup = create_wallet(params, Network::Bitcoin);
-    println!("user backup: {:?}", backup.0);
-    println!("user backup blob: {}", backup.0.as_blob().to_hex());
+    let (user_backup, recovery_backup) = create_wallet(params, Network::Signet);
+    println!("user backup: {:?}", user_backup);
+    println!("user backup blob: {}", user_backup.as_blob().to_hex());
     println!(
         "user backup roundtrip: {:?}",
-        UserBackup::from_hex(&backup.0.as_hex())
+        UserBackup::from_hex(&user_backup.as_hex())
     );
 
-    println!("recovery backup: {:?}", backup.1);
-    let mut shares = backup.1.split_shares();
+    println!("recovery backup: {:?}", recovery_backup);
+    let mut shares = recovery_backup.split_shares();
     println!(
         "recovery shares: {:?}",
         shares.iter().map(|s| s.as_hex()).collect::<Vec<_>>()
