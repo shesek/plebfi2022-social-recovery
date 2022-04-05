@@ -1,4 +1,6 @@
 use rand::Rng;
+use std::fmt;
+use std::convert::TryInto;
 
 use bitcoin::hashes::hex::{FromHex, ToHex};
 use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey};
@@ -7,6 +9,7 @@ use minsc::bitcoin;
 use serde::Deserialize;
 use sharks::{Share, Sharks};
 
+/// The recovery parameters. These are necessary for recovery and kept by both the user and his friends.
 #[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RecoveryParams {
     total_shares: u8,
@@ -15,6 +18,7 @@ pub struct RecoveryParams {
     fee: u32,
 }
 
+/// The backup held by the user. This provides unconditional immediate control over the funds.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct UserBackup {
     params: RecoveryParams,
@@ -22,6 +26,7 @@ pub struct UserBackup {
     recovery_xpub: ExtendedPubKey,
 }
 
+/// The complete data needed for recovery. This gets split into RecoveryShares
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct RecoveryBackup {
     params: RecoveryParams,
@@ -29,14 +34,13 @@ pub struct RecoveryBackup {
     recovery_seed: SeedSecret,
 }
 
+/// A single share
+pub struct RecoveryShare(sharks::Share);
+
 pub type SeedSecret = [u8; 32];
 pub type BackupBlob = Vec<u8>;
-pub type RecoveryShares = Vec<BackupBlob>;
 
-pub fn create_wallet(
-    params: RecoveryParams,
-    network: Network,
-) -> (UserBackup, RecoveryBackup, RecoveryShares) {
+pub fn create_wallet(params: RecoveryParams, network: Network) -> (UserBackup, RecoveryBackup) {
     let secp = secp256k1::Secp256k1::new();
 
     let user_seed = rand::thread_rng().gen::<[u8; 32]>();
@@ -57,15 +61,7 @@ pub fn create_wallet(
         recovery_seed,
     };
 
-    let recovery_blob = bincode::serialize(&recovery_backup).unwrap();
-
-    let sharks = Sharks(params.needed_shares);
-    let share_dealer = sharks.dealer(&recovery_blob);
-    let shares: Vec<Share> = share_dealer.take(params.total_shares as usize).collect();
-
-    let recovery_shares_blobs: Vec<Vec<u8>> = shares.iter().map(Vec::from).collect();
-
-    (user_backup, recovery_backup, recovery_shares_blobs)
+    (user_backup, recovery_backup)
 }
 
 impl UserBackup {
@@ -76,11 +72,45 @@ impl UserBackup {
         self.as_blob().to_hex()
     }
 
-    fn from_blob(blob: BackupBlob) -> Result<Self, bincode::Error> {
+    fn from_blob(blob: &BackupBlob) -> Result<Self, bincode::Error> {
         bincode::deserialize(&blob)
     }
     fn from_hex(s: &str) -> Result<Self, bincode::Error> {
-        Self::from_blob(Vec::from_hex(s).unwrap())
+        Self::from_blob(&Vec::from_hex(s).unwrap())
+    }
+}
+
+impl RecoveryBackup {
+    fn shares(&self) -> Vec<RecoveryShare> {
+        let recovery_blob = bincode::serialize(&self).unwrap();
+        let sharks = Sharks(self.params.needed_shares);
+        let share_dealer = sharks.dealer(&recovery_blob);
+        share_dealer
+            .take(self.params.total_shares as usize)
+            .map(RecoveryShare)
+            .collect()
+    }
+}
+
+impl RecoveryShare {
+    fn as_blob(&self) -> BackupBlob {
+        (&self.0).into()
+    }
+    fn as_hex(&self) -> String {
+        self.as_blob().to_hex()
+    }
+
+    fn from_blob(blob: &BackupBlob) -> Result<Self, &'static str> {
+        Ok(Self(blob[..].try_into()?))
+    }
+    fn from_hex(s: &str) -> Result<Self,&'static str> {
+        Self::from_blob(&Vec::from_hex(s).unwrap())
+    }
+}
+
+impl fmt::Debug for RecoveryShare {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.as_hex())
     }
 }
 
@@ -99,7 +129,7 @@ fn test_create_wallet() {
     println!("recovery backup: {:?}", wallet.1);
     println!(
         "recovery shares: {:?}",
-        wallet.2.iter().map(|s| s.to_hex()).collect::<Vec<_>>()
+        wallet.1.shares().iter().map(|s| s.as_hex()).collect::<Vec<_>>()
     );
 
     println!(
