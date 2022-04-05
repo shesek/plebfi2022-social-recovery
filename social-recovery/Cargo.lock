@@ -697,6 +697,7 @@ dependencies = [
  "minsc",
  "rand",
  "serde",
+ "serde_json",
  "sharks",
 ]
 

@@ -1,9 +1,11 @@
+use serde_json::Value;
+
 use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey};
 use bitcoin::util::schnorr::{TapTweak, TweakedKeyPair, TweakedPublicKey};
 use bitcoin::util::taproot::TaprootSpendInfo;
 use bitcoin::{secp256k1, Address, Amount, Network};
 use bitcoincore_rpc::RpcApi;
-use minsc::bitcoin;
+use minsc::{bitcoin, miniscript};
 
 use minsc::runtime::{Evaluate, Execute};
 
@@ -132,16 +134,21 @@ impl UserWallet {
                 bitcoincore_rpc::bitcoin::secp256k1::SecretKey::from_slice(seckey.as_ref())
                     .unwrap();
             let privkey = bitcoincore_rpc::bitcoin::PrivateKey {
-                compressed: false,
+                compressed: true,
                 network: bitcoincore_rpc::bitcoin::Network::Signet, // FIXME self.network,
                 key: corerpc_seckey,
             };
-            println!("privkey: {}", privkey);
+            println!("privkey: {}", privkey.to_wif());
+            let desc = format!("rawtr({})", privkey.to_wif());
+            let checksum = crate::desc_checksum(&desc);
+            println!("descriptor: {}#{}", desc, checksum);
             client
-                .import_private_key(
-                    &privkey,
-                    Some(&keypairi.public_key().to_string()),
-                    Some(false),
+                .call::<Value>(
+                    "importdescriptors",
+                    &[json!([{
+                        "desc": format!("{}#{}", desc, checksum),
+                        "timestamp": "now",
+                    }])],
                 )
                 .unwrap();
         }
@@ -180,7 +187,7 @@ fn test_wallet() {
     );
 
     let client = bitcoincore_rpc::Client::new(
-        "http://127.0.0.1:38332/wallet/ctvex5",
+        "http://127.0.0.1:38332/wallet/ctvex",
         bitcoincore_rpc::Auth::UserPass("satoshi".into(), "1234".into()),
     )
     .unwrap();
