@@ -1,6 +1,7 @@
+use minsc::bitcoin::secp256k1::ecdsa::RecoverableSignature;
 use rand::Rng;
-use std::fmt;
 use std::convert::TryInto;
+use std::fmt;
 
 use bitcoin::hashes::hex::{FromHex, ToHex};
 use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey};
@@ -81,7 +82,7 @@ impl UserBackup {
 }
 
 impl RecoveryBackup {
-    fn shares(&self) -> Vec<RecoveryShare> {
+    fn split_shares(&self) -> Vec<RecoveryShare> {
         let recovery_blob = bincode::serialize(&self).unwrap();
         let sharks = Sharks(self.params.needed_shares);
         let share_dealer = sharks.dealer(&recovery_blob);
@@ -89,6 +90,13 @@ impl RecoveryBackup {
             .take(self.params.total_shares as usize)
             .map(RecoveryShare)
             .collect()
+    }
+
+    fn recover_from_shares(shares: &[RecoveryShare]) -> Result<Self, &str> {
+        let sharks = Sharks(0);
+        let shark_shares = shares.iter().map(|s| s.0.clone()).collect::<Vec<_>>();
+        let recovery_blob = sharks.recover(&shark_shares).unwrap();
+        Ok(bincode::deserialize(&recovery_blob).unwrap())
     }
 }
 
@@ -103,7 +111,7 @@ impl RecoveryShare {
     fn from_blob(blob: &BackupBlob) -> Result<Self, &'static str> {
         Ok(Self(blob[..].try_into()?))
     }
-    fn from_hex(s: &str) -> Result<Self,&'static str> {
+    fn from_hex(s: &str) -> Result<Self, &'static str> {
         Self::from_blob(&Vec::from_hex(s).unwrap())
     }
 }
@@ -126,14 +134,28 @@ fn test_create_wallet() {
     let wallet = create_wallet(params, Network::Bitcoin);
     println!("user backup: {:?}", wallet.0);
     println!("user backup blob: {}", wallet.0.as_blob().to_hex());
-    println!("recovery backup: {:?}", wallet.1);
     println!(
-        "recovery shares: {:?}",
-        wallet.1.shares().iter().map(|s| s.as_hex()).collect::<Vec<_>>()
-    );
-
-    println!(
-        "user backup from hex: {:?}",
+        "user backup roundtrip: {:?}",
         UserBackup::from_hex(&wallet.0.as_hex())
     );
+
+    println!("recovery backup: {:?}", wallet.1);
+    let mut shares = wallet.1.split_shares();
+    println!(
+        "recovery shares: {:?}",
+        shares.iter().map(|s| s.as_hex()).collect::<Vec<_>>()
+    );
+    shares.remove(0);
+    shares.remove(0);
+    println!(
+        "recovered from 5 shares: {:?}",
+        RecoveryBackup::recover_from_shares(&shares).unwrap()
+    );
+    /*
+    shares.remove(0);
+    println!(
+        "fails with 4 shares: {:?}",
+        RecoveryBackup::recover_from_shares(&shares).unwrap_err()
+    );
+    */
 }
