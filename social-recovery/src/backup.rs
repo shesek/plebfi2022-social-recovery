@@ -13,26 +13,26 @@ use sharks::{Share, Sharks};
 /// The recovery parameters. These are necessary for recovery and kept by both the user and his friends.
 #[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RecoveryParams {
-    total_shares: u8,
-    needed_shares: u8,
-    delay: u32,
-    fee: u32,
+    pub total_shares: u8,
+    pub needed_shares: u8,
+    pub delay: u32,
+    pub fee: u32,
 }
 
 /// The backup held by the user. This provides unconditional immediate control over the funds.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct UserBackup {
-    params: RecoveryParams,
-    user_seed: SeedSecret,
-    recovery_xpub: ExtendedPubKey,
+    pub params: RecoveryParams,
+    pub user_seed: SeedSecret,
+    pub recovery_xpub: ExtendedPubKey,
 }
 
 /// The complete data needed for recovery. This gets split into RecoveryShares
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct RecoveryBackup {
-    params: RecoveryParams,
-    user_xpub: ExtendedPubKey,
-    recovery_seed: SeedSecret,
+    pub params: RecoveryParams,
+    pub user_xpub: ExtendedPubKey,
+    pub recovery_seed: SeedSecret,
 }
 
 /// A single share
