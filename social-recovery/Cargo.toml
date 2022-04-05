@@ -1,0 +1,7 @@
+[package]
+name = "social-recovery"
+version = "0.1.0"
+authors = ["Nadav Ivgi <nadav@shesek.info>"]
+edition = "2018"
+
+[dependencies]
