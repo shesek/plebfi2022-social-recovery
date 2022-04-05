@@ -79,6 +79,10 @@ impl UserWallet {
         .unwrap();
         println!("Created taptree for index {} amount {}:", index, amount);
         println!("{:?}\n\n", tapinfo);
+
+        use bitcoin::util::address::WitnessVersion;
+        let spk =  bitcoin::Script::new_witness_program(WitnessVersion::V1, &tapinfo.output_key().serialize());
+        println!("Address: {}\n\n", Address::from_script(&spk, self.network).unwrap());
         tapinfo
     }
 
@@ -206,20 +210,3 @@ fn test_wallet() {
         .unwrap();
         */
 }
-
-// slides
-// - problem lost keys, solution recovery, problem collusion, solution delay via CTV
-// - what's possible on bitcoin today with CSV (minsc code)
-// - two-step recovery with CTV (minsc code)
-// - assumptions, why SSSS
-// - simplified two-step recovery with taproot (+taproot advantages, ssss advantage over taproot musig leaves)
-// - demo
-// - limitations / future work
-//   - no ctv-capable wallets
-//   - static backups are tricky, some solutions:
-//     - multiple fixed denominations
-//     - scan all outputs
-//     - mark with OP_RETURN
-//     - elements-style introspection
-//     - CTV relative-to-total amounts (also helps prevent stuck funds due to amount mismiatch)
-//     - accept backups not being static
