@@ -4,7 +4,7 @@ use bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey};
 use bitcoin::util::schnorr::{TapTweak, TweakedKeyPair, TweakedPublicKey};
 use bitcoin::util::taproot::TaprootSpendInfo;
 use bitcoin::{secp256k1, Address, Amount, Network};
-use bitcoincore_rpc::RpcApi;
+//use bitcoincore_rpc::RpcApi;
 use minsc::{bitcoin, miniscript};
 
 use minsc::runtime::{Evaluate, Execute};
@@ -119,6 +119,7 @@ impl UserWallet {
         keypairs
     }
 
+    /* 
     pub fn import_tweaked_to_core(
         &self,
         client: &bitcoincore_rpc::Client,
@@ -155,6 +156,11 @@ impl UserWallet {
         client.rescan_blockchain(None, None).unwrap();
         Ok(())
     }
+    */
+
+    //pub fn staging_descriptor_xpriv(&self, index: u32, amount: Amount) -> String {
+    //    self.eval_minsc(index, amount, "")
+    //}
 }
 
 #[test]
@@ -186,6 +192,7 @@ fn test_wallet() {
         wallet.export_tweaked(0, 4, &amounts).len()
     );
 
+    /* 
     let client = bitcoincore_rpc::Client::new(
         "http://127.0.0.1:38332/wallet/ctvex",
         bitcoincore_rpc::Auth::UserPass("satoshi".into(), "1234".into()),
@@ -194,6 +201,7 @@ fn test_wallet() {
     wallet
         .import_tweaked_to_core(&client, 0, 3, &amounts)
         .unwrap();
+        */
 }
 
 // slides
