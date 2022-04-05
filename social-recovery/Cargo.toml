@@ -5,3 +5,5 @@ authors = ["Nadav Ivgi <nadav@shesek.info>"]
 edition = "2018"
 
 [dependencies]
+minsc = { path = "/workspace/minsc" }
+rand = "0.8.5"
