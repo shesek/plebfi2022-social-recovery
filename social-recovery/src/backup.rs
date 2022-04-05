@@ -123,7 +123,7 @@ impl fmt::Debug for RecoveryShare {
 }
 
 #[test]
-fn test_create_wallet() {
+fn test_create_backup() {
     use bitcoin::hashes::hex::ToHex;
     let params = RecoveryParams {
         total_shares: 7,
@@ -131,16 +131,16 @@ fn test_create_wallet() {
         delay: 100,
         fee: 250,
     };
-    let wallet = create_wallet(params, Network::Bitcoin);
-    println!("user backup: {:?}", wallet.0);
-    println!("user backup blob: {}", wallet.0.as_blob().to_hex());
+    let backup = create_wallet(params, Network::Bitcoin);
+    println!("user backup: {:?}", backup.0);
+    println!("user backup blob: {}", backup.0.as_blob().to_hex());
     println!(
         "user backup roundtrip: {:?}",
-        UserBackup::from_hex(&wallet.0.as_hex())
+        UserBackup::from_hex(&backup.0.as_hex())
     );
 
-    println!("recovery backup: {:?}", wallet.1);
-    let mut shares = wallet.1.split_shares();
+    println!("recovery backup: {:?}", backup.1);
+    let mut shares = backup.1.split_shares();
     println!(
         "recovery shares: {:?}",
         shares.iter().map(|s| s.as_hex()).collect::<Vec<_>>()
