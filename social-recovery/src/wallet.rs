@@ -98,6 +98,22 @@ impl UserWallet {
         let (tweaked_pubkey, _) = self.tweaked_output_pubkey(index, amount);
         Address::p2tr_tweaked(tweaked_pubkey, self.network)
     }
+
+    pub fn export_tweaked(
+        &self,
+        start_index: u32,
+        end_index: u32,
+        amounts: &[Amount],
+    ) -> Vec<TweakedKeyPair> {
+        let mut keypairs =
+            Vec::with_capacity((end_index - start_index + 1) as usize * amounts.len());
+        for index in start_index..=end_index {
+            for amount in amounts {
+                keypairs.push(self.tweaked_output_keypair(index, *amount));
+            }
+        }
+        keypairs
+    }
 }
 
 #[test]
@@ -120,6 +136,16 @@ fn test_wallet() {
     println!(
         "address 0: {:?}",
         wallet.address(0, "0.25 BTC".parse().unwrap())
+    );
+    println!(
+        "export 0-3 with 2 amounts: {} total keypairs",
+        wallet
+            .export_tweaked(
+                0,
+                3,
+                &["0.25 BTC".parse().unwrap(), "1 BTC".parse().unwrap()]
+            )
+            .len()
     );
 }
 
