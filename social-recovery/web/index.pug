@@ -1,0 +1,44 @@
+doctype html
+
+head
+  title Social Recovery
+
+  meta(charset='utf-8')
+  meta(name='viewport', content='width=device-width, initial-scale=1')
+
+  link(rel='stylesheet', href='bootstrap.min.css')
+  link(rel='stylesheet', href='style.css')
+
+body
+  #create-wallet.container.mt-4
+    h3 Create wallet
+    form
+      .form-group
+        label Total number of shares
+        input.form-control#total-shares(name="total-shares", type="number", value="7")
+      .form-group
+        label needed shares
+        input.form-control#needed-shares(name="needed-shares", type="number", value="5")
+      .form-group
+        label Time delay
+        input.form-control#time-delay(value="6 months")
+      .form-group
+        label Wallet label (optional)
+        input.form-control#label(name="label", value="Shesek's wallet")
+      .form-group
+        label Additional instructions (optional)
+        textarea.form-control#text(name="text") If I ever request this from you, ask me to meet for coffee at a public space, chat with me for awhile and hand the share to me in-person. 
+      button.btn.btn-primary(type="submit") Create wallet
+
+  #wallet-backup.container.d-none.mt-4
+    h3 User backup
+    p.text-muted This backup provides complete control over the funds. Keep it secret!
+    code#user-backup-hex
+    br
+    br
+    br
+    
+    h3 Shares
+    br
+    div#shares
+  script(src='index.js')

@@ -9,6 +9,7 @@ extern crate serde_json;
 pub mod backup;
 pub mod wallet;
 
+pub mod wasm;
 
 
 // Copied from https://github.com/rust-bitcoin/rust-miniscript/blob/master/src/descriptor/checksum.rs 

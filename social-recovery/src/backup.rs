@@ -67,7 +67,7 @@ impl UserBackup {
     fn as_blob(&self) -> BackupBlob {
         bincode::serialize(self).unwrap()
     }
-    fn as_hex(&self) -> String {
+    pub fn as_hex(&self) -> String {
         self.as_blob().to_hex()
     }
 
@@ -80,7 +80,7 @@ impl UserBackup {
 }
 
 impl RecoveryBackup {
-    fn split_shares(&self) -> Vec<RecoveryShare> {
+    pub fn split_shares(&self) -> Vec<RecoveryShare> {
         let recovery_blob = bincode::serialize(&self).unwrap();
         let sharks = Sharks(self.params.needed_shares);
         let share_dealer = sharks.dealer(&recovery_blob);
@@ -90,7 +90,7 @@ impl RecoveryBackup {
             .collect()
     }
 
-    fn recover_from_shares(shares: &[RecoveryShare]) -> Result<Self, &str> {
+    pub fn recover_from_shares(shares: &[RecoveryShare]) -> Result<Self, &str> {
         let sharks = Sharks(0);
         let shark_shares = shares.iter().map(|s| s.0.clone()).collect::<Vec<_>>();
         let recovery_blob = sharks.recover(&shark_shares).unwrap();
@@ -102,14 +102,14 @@ impl RecoveryShare {
     fn as_blob(&self) -> BackupBlob {
         (&self.0).into()
     }
-    fn as_hex(&self) -> String {
+    pub fn as_hex(&self) -> String {
         self.as_blob().to_hex()
     }
 
     fn from_blob(blob: &BackupBlob) -> Result<Self, &'static str> {
         Ok(Self(blob[..].try_into()?))
     }
-    fn from_hex(s: &str) -> Result<Self, &'static str> {
+    pub fn from_hex(s: &str) -> Result<Self, &'static str> {
         Self::from_blob(&Vec::from_hex(s).unwrap())
     }
 }

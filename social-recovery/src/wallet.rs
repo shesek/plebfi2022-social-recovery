@@ -70,13 +70,16 @@ impl UserWallet {
     }
 
     pub fn tapinfo(&self, index: u32, amount: Amount) -> TaprootSpendInfo {
-        self.eval_minsc(
+        let tapinfo = self.eval_minsc(
             index,
             amount,
             "twoStepRecovery($user_pk, $recovery_pk, $delay, $amount, $fee)",
         )
         .into_tapinfo()
-        .unwrap()
+        .unwrap();
+        println!("Created taptree for index {} amount {}:", index, amount);
+        println!("{:?}\n\n", tapinfo);
+        tapinfo
     }
 
     pub fn tweaked_output_keypair(&self, index: u32, amount: Amount) -> TweakedKeyPair {
