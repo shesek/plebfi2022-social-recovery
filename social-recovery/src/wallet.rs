@@ -77,12 +77,12 @@ impl UserWallet {
         )
         .into_tapinfo()
         .unwrap();
-        println!("Created taptree for index {} amount {}:", index, amount);
+        println!("Created taproot tree for index {} amount {}:", index, amount);
         println!("{:?}\n\n", tapinfo);
 
         use bitcoin::util::address::WitnessVersion;
         let spk =  bitcoin::Script::new_witness_program(WitnessVersion::V1, &tapinfo.output_key().serialize());
-        println!("Address: {}\n\n", Address::from_script(&spk, self.network).unwrap());
+        println!("Address {}: {}\n\n", index, Address::from_script(&spk, self.network).unwrap());
         tapinfo
     }
 
